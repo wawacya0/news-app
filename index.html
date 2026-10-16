@@ -1,0 +1,29 @@
+name: Auto News Update
+on:
+  schedule:
+    - cron: '0 22 * * *' # 세계표준시 22:00 = 한국시간 매일 아침 07:00
+  workflow_dispatch: # 버튼을 눌러 수동으로 즉시 실행할 수 있는 기능
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 파이썬 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: 뉴스 수집 로봇 실행
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python update_news.py
+        
+      - name: 수집된 뉴스를 깃허브에 업데이트
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add news_data.json
+          git commit -m "Auto-update daily news" || exit 0
+          git push
